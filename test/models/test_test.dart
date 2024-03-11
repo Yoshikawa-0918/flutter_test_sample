@@ -253,4 +253,38 @@ void main() {
       expect(controllerWith12Close().stream, mayEmitMultiple(3));
     });
   });
+
+  group("Future型のテスト", () {
+    Future<int> futureMethod(int value) async {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (value < 0) {
+        throw Exception('value is negative');
+      }
+      return value;
+    }
+
+    test("expectLater completion", () async {
+      final result = futureMethod(1);
+
+      ///非同期処理の場合はexpectLaterとcompletionを使う
+      await expectLater(result, completion(1));
+    });
+
+    test('expectLater throwsException', () async {
+      final result = futureMethod(-1);
+
+      ///エラーを受け取ったかどうか
+      expectLater(result, throwsException);
+    });
+
+    test("expectLater completes", () async {
+      ///処理が正常に終了したかどうか
+      expect(futureMethod(1), completes);
+    });
+
+    test("expectLater completes", () async {
+      ///処理が終了しなかったどうか(エラーを受け取ったか,無限ループに入ってしまったかetc)
+      expect(futureMethod(-1), doesNotComplete);
+    });
+  });
 }
