@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -169,5 +171,86 @@ void main() {
     expect(map, isNot({1: "1", 2: "2", 3: "3", 4: "4"}));
     expect(map, isNot({1: "1", 2: "2", 4: "3"}));
     expect(map, isNot({1: "1", 2: "2", 3: "4"}));
+  });
+
+  group('Streamのテスト', () {
+    test("emitsInOrder", () {
+      final controller = StreamController();
+
+      ///ストリームにデータを流す
+      controller.add(1);
+      controller.add(2);
+
+      ///ストリームをクローズする これ以上イベントは追加できない
+      controller.close();
+
+      expect(controller.stream, emitsInOrder([1, 2, emitsDone]));
+    });
+
+    StreamController<int> controllerWith12Close() {
+      final controller = StreamController<int>();
+
+      ///ストリームにデータを流す
+      controller.add(1);
+      controller.add(2);
+
+      ///ストリームをクローズする これ以上イベントは追加できない
+      controller.close();
+
+      return controller;
+    }
+
+    test('controllerWith12Close', () async {
+      expect(controllerWith12Close().stream, emitsInOrder([1, 2, emitsDone]));
+    });
+
+    test("emitsDone", () async {
+      ///先頭から順番に一致するかどうかチェックする(まだ完璧に理解できてない)
+      expect(controllerWith12Close().stream, emitsInOrder([1]));
+      expect(controllerWith12Close().stream, emitsInOrder([1, 2]));
+      expect(controllerWith12Close().stream, emitsInOrder([1, 2, emitsDone]));
+
+      ///以下はパスしない
+      //expect(controllerWith12Close().stream, emitsInOrder([1, emitsDone]));
+    });
+
+    test("emitsAnyOf", () async {
+      ///いずれかは一致すればOK
+      expect(controllerWith12Close().stream, emitsAnyOf([1]));
+      expect(controllerWith12Close().stream, emitsAnyOf([1, 2]));
+      expect(controllerWith12Close().stream, emitsAnyOf([1, 2, 3]));
+    });
+
+    test("emitsInOrder with emitsAnyOf", () async {
+      expect(
+          controllerWith12Close().stream,
+          emitsInOrder([
+            emitsAnyOf([1, 2]),
+            emitsAnyOf([1, 2]),
+            emitsDone,
+          ]));
+    });
+
+    test("event length", () async {
+      expect(await controllerWith12Close().stream.length, 2);
+    });
+
+    test("emitsInAnyOrder", () async {
+      expect(controllerWith12Close().stream, emitsInAnyOrder([1, 2]));
+      expect(controllerWith12Close().stream, emitsInAnyOrder([2, 1]));
+    });
+
+    test("neverEmits", () async {
+      ///いずれにも一致しなければOK
+      expect(controllerWith12Close().stream, neverEmits(3));
+      expect(controllerWith12Close().stream, neverEmits([3, 4]));
+      expect(controllerWith12Close().stream, neverEmits(isNegative));
+    });
+
+    test("mayEmit, mayEmitMultiple", () async {
+      ///matcherが比較対象のstreamに一致することを許可する(?)
+      expect(controllerWith12Close().stream, mayEmit(3));
+      expect(controllerWith12Close().stream, mayEmitMultiple(3));
+    });
   });
 }
