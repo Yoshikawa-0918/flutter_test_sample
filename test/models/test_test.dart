@@ -158,4 +158,16 @@ void main() {
     ///要素数と要素が一致しているか(順番は異なっても良い)
     expect(list, unorderedEquals([1, 2, 3, 5, 4]));
   });
+
+  test("Mapのテスト", () async {
+    Map<int, String> map = {1: "1", 2: "2", 3: "3"};
+
+    expect(map, {1: "1", 2: "2", 3: "3"});
+    expect(map, {1: "1", 3: "3", 2: "2"});
+
+    expect(map, isNot({1: "1", 2: "2"}));
+    expect(map, isNot({1: "1", 2: "2", 3: "3", 4: "4"}));
+    expect(map, isNot({1: "1", 2: "2", 4: "3"}));
+    expect(map, isNot({1: "1", 2: "2", 3: "4"}));
+  });
 }
